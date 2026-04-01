@@ -365,7 +365,7 @@ const ListBooking = ({ setSidebarOpen }) => {
                           </td>
                         </motion.tr>
                       ))}
-                      </AnimatePresence>}
+                      </AnimatePresence>
                     </tbody>
                   </table>
                 </div>

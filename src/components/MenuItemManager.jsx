@@ -322,7 +322,7 @@ const MenuItemManager = () => {
                         )}
                       </motion.tr>
                     ))}
-                    </AnimatePresence>}
+                    </AnimatePresence>
                   </tbody>
                 </table>
               </div>
