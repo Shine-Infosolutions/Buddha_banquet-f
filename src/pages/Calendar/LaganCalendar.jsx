@@ -314,7 +314,6 @@ function LaganCalendar({ setSidebarOpen }) {
 
   const fetchBookings = async () => {
     try {
-      console.log('Fetching bookings...');
       const response = await fetch('https://shine-banquet-hotel-backend.vercel.app/api/bookings/');
       const data = await response.json();
       
@@ -337,12 +336,8 @@ function LaganCalendar({ setSidebarOpen }) {
           grouped[dateKey].push(booking);
         }
       });
-      
-      console.log('LaganCalendar bookings:', bookingsArray);
-      console.log('Grouped bookings:', grouped);
       setBookings(grouped);
     } catch (err) {
-      console.error("Failed to fetch bookings", err);
     }
   };
 

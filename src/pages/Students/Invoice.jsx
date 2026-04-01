@@ -63,14 +63,11 @@ const Invoice = () => {
   const fetchMenuData = async (customerRef) => {
     if (!customerRef) return;
     try {
-      console.log('Fetching menu for customerRef:', customerRef);
       const response = await menuAPI.getByCustomerRef(customerRef);
-      console.log('Menu API Response:', response.data);
       if (response.data && response.data.menu && response.data.menu.categories) {
         setMenuData(response.data.menu.categories);
       }
     } catch (error) {
-      console.error('Error fetching menu data:', error);
     }
   };
 
@@ -92,7 +89,6 @@ const Invoice = () => {
       try {
         // First try to get all bookings and find the specific one
         const response = await bookingAPI.getAll();
-        console.log('All Bookings API Response:', response.data);
         
         let allBookings = [];
         
@@ -120,7 +116,6 @@ const Invoice = () => {
         // Fetch menu data for this booking using customerRef
         await fetchMenuData(bookingData.customerRef || bookingData._id);
       } catch (error) {
-        console.error('Fetch error:', error);
         setError("Failed to load booking details. Please try again later.");
       } finally {
         setLoading(false);

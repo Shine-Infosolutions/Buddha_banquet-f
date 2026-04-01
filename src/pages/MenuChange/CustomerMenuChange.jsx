@@ -21,7 +21,6 @@ const CustomerMenuChange = () => {
       try {
         const res = await menuAPI.getByCustomerRef(customerRef);
         setBooking(res.data.booking);
-        console.log(res.data.booking);
         setMenu(res.data.menu);
       } catch (err) {
         setError("Failed to fetch menu for this customerRef.");

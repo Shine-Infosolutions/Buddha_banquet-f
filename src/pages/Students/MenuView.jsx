@@ -19,11 +19,9 @@ const MenuView = () => {
         // Try to fetch menu first
         try {
           const res = await menuAPI.getByBookingId(id);
-          console.log('Menu API Response:', res.data);
           setMenu(res.data.data?.categories || res.data.data || res.data || {});
           return;
         } catch (menuError) {
-          console.log('Menu not found, trying booking data...');
         }
         
         // Fallback: try to get menu from booking data
@@ -37,7 +35,6 @@ const MenuView = () => {
         }
         
       } catch (error) {
-        console.error('Fetch error:', error);
         setError("Failed to load menu. Please try again later.");
       } finally {
         setLoading(false);

@@ -628,7 +628,6 @@ const UpdateBooking = () => {
       .catch((err) => {
         setLoading(false);
         toast.error(err.response?.data?.message || "Error updating booking");
-        console.error("Update Error:", err);
       });
   };
 

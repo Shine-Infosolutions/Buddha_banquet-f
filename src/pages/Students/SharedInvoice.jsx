@@ -101,7 +101,6 @@ const SharedInvoice = () => {
       
       return pdf;
     } catch (error) {
-      console.error('Error generating PDF:', error);
       alert('Error generating PDF');
       return null;
     } finally {

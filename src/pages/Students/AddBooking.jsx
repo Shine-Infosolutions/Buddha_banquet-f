@@ -321,7 +321,6 @@ const AddBooking = () => {
       }));
     } catch (error) {
       toast.error("Error processing menu selection");
-      console.error("Menu save error:", error);
     }
   };
 
@@ -407,7 +406,6 @@ const AddBooking = () => {
       setSubmitSuccess(true);
       setTimeout(() => setSubmitSuccess(false), 1200);
     } catch (err) {
-      console.error("Error:", err);
       toast.error("Something went wrong");
       setSubmitError(true);
       setTimeout(() => setSubmitError(false), 600);

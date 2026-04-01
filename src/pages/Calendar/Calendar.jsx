@@ -98,9 +98,7 @@ function Calendar({ setSidebarOpen }) {
       })
       
       setBookings(grouped)
-      console.log('Calendar bookings:', filteredBookings)
     } catch (err) {
-      console.error('Failed to fetch bookings for calendar:', err)
     } finally {
       setLoading(false)
     }

@@ -54,7 +54,6 @@ const MenuSelector = ({
       const response = await axios.get('/api/menu-items');
       return response.data.success ? response.data.data : response.data;
     } catch (error) {
-      console.error('Error fetching menu items:', error);
       return [];
     }
   };
@@ -64,7 +63,6 @@ const MenuSelector = ({
       const response = await axios.post('/api/menu-items', itemData);
       return response.data;
     } catch (error) {
-      console.error('Error creating menu item:', error);
       throw error;
     }
   };
@@ -74,7 +72,6 @@ const MenuSelector = ({
       const response = await axios.delete(`/api/menu-items/${itemId}`);
       return response.data;
     } catch (error) {
-      console.error('Error deleting menu item:', error);
       throw error;
     }
   };
@@ -84,7 +81,6 @@ const MenuSelector = ({
       const response = await axios.delete('/api/menu-items');
       return response.data;
     } catch (error) {
-      console.error('Error deleting menu items:', error);
       throw error;
     }
   };
@@ -94,7 +90,6 @@ const MenuSelector = ({
       const response = await axios.get('/api/categories/all');
       return response.data;
     } catch (error) {
-      console.error('Error fetching categories:', error);
       return [];
     }
   };
@@ -104,7 +99,6 @@ const MenuSelector = ({
       const response = await axios.post('/api/categories/create', categoryData);
       return response.data;
     } catch (error) {
-      console.error('Error creating category:', error);
       throw error;
     }
   };
@@ -114,7 +108,6 @@ const MenuSelector = ({
       const response = await axios.get('/api/plan-limits/get');
       return response.data;
     } catch (error) {
-      console.error('Error fetching plan limits:', error);
       return [];
     }
   };
@@ -124,7 +117,6 @@ const MenuSelector = ({
       const response = await axios.post('/api/plan-limits', limitsData);
       return response.data;
     } catch (error) {
-      console.error('Error creating plan limits:', error);
       throw error;
     }
   };
@@ -213,8 +205,6 @@ const MenuSelector = ({
           setPlanLimits(limits);
         }
       } catch (error) {
-        console.error('Error fetching data:', error);
-        console.error('Error details:', error.response?.data);
       } finally {
         setLoading(false);
       }
@@ -353,7 +343,6 @@ const MenuSelector = ({
         data: { name: newCategoryName }
       });
     } catch (error) {
-      console.error('Error adding category:', error);
     }
   };
 
@@ -373,7 +362,6 @@ const MenuSelector = ({
         });
       }
     } catch (error) {
-      console.error('Error deleting menu item:', error);
     }
   };
 

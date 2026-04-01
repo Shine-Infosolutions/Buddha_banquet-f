@@ -19,7 +19,6 @@ const PlanLimitManager = () => {
       setLimits(limitsRes.data?.success ? limitsRes.data.data : []);
       setCategories(Array.isArray(catsRes.data) ? catsRes.data : []);
     } catch (err) {
-      console.error('Failed to fetch data:', err);
     } finally {
       setLoading(false);
     }

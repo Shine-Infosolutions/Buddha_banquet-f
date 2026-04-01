@@ -15,7 +15,6 @@ const ChefPDFPreview = ({ booking, className }) => {
     try {
       // First try to use booking's categorizedMenu if available
       if (booking.categorizedMenu && Object.keys(booking.categorizedMenu).length > 0) {
-        console.log('Using booking categorizedMenu:', booking.categorizedMenu);
         setMenuData(booking.categorizedMenu);
         setLoading(false);
         return;
@@ -56,7 +55,6 @@ const ChefPDFPreview = ({ booking, className }) => {
       // If no API worked, use booking data as fallback
       setMenuData(booking.categorizedMenu || {});
     } catch (error) {
-      console.error('Error fetching menu:', error);
       setMenuData(booking.categorizedMenu || {});
     } finally {
       setLoading(false);
