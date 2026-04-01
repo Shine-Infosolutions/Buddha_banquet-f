@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import axios from 'axios';
+import api from '../services/api';
 import { useReactToPrint } from "react-to-print";
 import Logo from "../assets/buddha avenue.png";
 
@@ -25,19 +25,13 @@ const ChefPDFPreview = ({ booking, className }) => {
       
       // Try multiple API endpoints
       const endpoints = [
-        `https://shine-banquet-hotel-backend.vercel.app/api/banquet-menus/${booking._id}`,
-        `https://shine-banquet-hotel-backend.vercel.app/api/menus/all/${booking.customerRef || booking._id}`,
-        `https://shine-banquet-hotel-backend.vercel.app/api/menus/${booking._id}`
+        `/api/menus/all/${booking.customerRef || booking._id}`,
+        `/api/menus/${booking._id}`
       ];
 
       for (const endpoint of endpoints) {
         try {
-          console.log('Trying endpoint:', endpoint);
-          const response = await axios.get(endpoint, {
-            headers: { Authorization: `Bearer ${token}` }
-          });
-          
-          console.log('API Response:', response.data);
+          const response = await api.get(endpoint);
           
           let menuData = null;
           if (response.data?.menu?.categories) {
@@ -51,12 +45,10 @@ const ChefPDFPreview = ({ booking, className }) => {
           }
           
           if (menuData && Object.keys(menuData).length > 0) {
-            console.log('Found menu data:', menuData);
             setMenuData(menuData);
             return;
           }
         } catch (err) {
-          console.log('Endpoint failed:', endpoint, err.message);
           continue;
         }
       }

@@ -304,7 +304,7 @@ const MenuSelector = ({
           ? planLimits.find(plan => plan.foodType === foodType && plan.ratePlan === ratePlan)
           : null;
         
-        const categoryLimit = matchingPlan?.limits?.[currentCategory];
+        const categoryLimit = matchingPlan?.limits?.[currentCategory] || matchingPlan?.limits?.[categories.find(c => (c.cateName || c.name) === currentCategory)?._id];
         
         if (categoryLimit) {
           const currentCategorySelectedCount = prev.filter(selectedItem => {
@@ -389,6 +389,15 @@ const MenuSelector = ({
     ? planLimits.find(p => p.foodType === foodType && p.ratePlan === ratePlan)
     : null;
 
+  // Resolve limit for a category name — checks both by ID and by name
+  const getCategoryLimit = (catName) => {
+    if (!matchingPlan?.limits) return null;
+    const catObj = categories.find(c => (c.cateName || c.name) === catName);
+    const catId = catObj?._id || catObj?.id;
+    // Try by ID first, then by name
+    return matchingPlan.limits[catId] || matchingPlan.limits[catName] || null;
+  };
+
   const getCategoryCount = (catName) =>
     selectedItems.filter(si => {
       const d = menuItems.find(mi => mi.name === si);
@@ -449,7 +458,7 @@ const MenuSelector = ({
               categories.map((cat) => {
                 const catName = cat.cateName || cat.name;
                 const isActive = currentCategory === catName;
-                const limit = matchingPlan?.limits?.[catName];
+                const limit = getCategoryLimit(catName);
                 const count = getCategoryCount(catName);
                 return (
                   <button key={catName} onClick={() => setCurrentCategory(catName)}
@@ -474,7 +483,7 @@ const MenuSelector = ({
           <div className="flex items-center justify-between mb-3">
             <h4 className="text-sm font-bold text-gray-700">{currentCategory}</h4>
             {(() => {
-              const limit = matchingPlan?.limits?.[currentCategory];
+              const limit = getCategoryLimit(currentCategory);
               const count = getCategoryCount(currentCategory);
               if (!limit) return null;
               return (
@@ -499,7 +508,7 @@ const MenuSelector = ({
                 const isSelected = selectedItems.includes(item.name);
                 let isLimitReached = false;
                 if (!isAdmin) {
-                  const limit = matchingPlan?.limits?.[currentCategory];
+                  const limit = getCategoryLimit(currentCategory);
                   const count = getCategoryCount(currentCategory);
                   isLimitReached = limit && count >= limit && !isSelected;
                 }
