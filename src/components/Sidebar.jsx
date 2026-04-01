@@ -8,6 +8,8 @@ import Logo from "../assets/buddha avenue.png"
 const Sidebar = ({ sidebarOpen, setSidebarOpen }) => {
   const location = useLocation()
   const navigate = useNavigate()
+  const userRole = localStorage.getItem('role') || 'Staff'
+  const isAdmin = userRole?.toLowerCase() === 'admin'
   
   const handleLogout = () => {
     localStorage.removeItem('User')
@@ -16,28 +18,14 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }) => {
     window.location.href = '/'
   }
 
-  const menuItems = [
-    {
-      title: 'Calendar',
-      icon: FaCalendarAlt,
-      path: '/calendar'
-    },
-    {
-      title: 'Booking List',
-      icon: FaList,
-      path: '/banquet/list-booking'
-    },
-    {
-      title: 'Menu Plan',
-      icon: FaUtensils,
-      path: '/menu-plan'
-    },
-    {
-      title: 'Lagan Calendar',
-      icon: FaCalendarCheck,
-      path: '/lagan-calendar'
-    }
+  const allMenuItems = [
+    { title: 'Calendar', icon: FaCalendarAlt, path: '/calendar' },
+    { title: 'Booking List', icon: FaList, path: '/banquet/list-booking' },
+    { title: 'Menu Plan', icon: FaUtensils, path: '/menu-plan', adminOnly: true },
+    { title: 'Lagan Calendar', icon: FaCalendarCheck, path: '/lagan-calendar' },
   ]
+
+  const menuItems = allMenuItems.filter(item => !item.adminOnly || isAdmin)
 
   return (
     <>
@@ -76,9 +64,11 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }) => {
         </div>
       </motion.div>
 
-      {/* Admin Section */}
+      {/* Role Section */}
       <div className="px-6 py-4 border-b border-gray-700">
-        <h2 className="text-[#c3ad6b] font-semibold text-lg">ADMIN PANEL</h2>
+        <h2 className="text-[#c3ad6b] font-semibold text-lg">
+          {isAdmin ? 'ADMIN PANEL' : 'STAFF PANEL'}
+        </h2>
       </div>
 
       {/* Navigation Menu */}
