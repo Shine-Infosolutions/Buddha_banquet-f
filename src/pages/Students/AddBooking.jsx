@@ -630,16 +630,18 @@ const AddBooking = () => {
                   </label>
                   <div className="relative">
                     <FaRegCalendarAlt className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-                    <input
-                      type="time"
+                    <select
                       name="time"
                       className={`pl-10 w-full rounded-lg border ${
                         errors.time ? "border-red-500" : "border-gray-300"
                       } focus:ring-2 focus:ring-blue-500 focus:border-blue-500 py-2 px-3`}
                       onChange={handleChange}
                       value={form.time}
-                      required
-                    />
+                    >
+                      <option value="">Select Time Slot</option>
+                      <option value="10:00 AM - 4:00 PM">10:00 AM - 4:00 PM</option>
+                      <option value="7:00 PM - 11:00 PM">7:00 PM - 11:00 PM</option>
+                    </select>
                   </div>
                   {errors.time && (
                     <p className="text-red-500 text-xs mt-1">{errors.time}</p>
@@ -661,9 +663,10 @@ const AddBooking = () => {
                     required
                   >
                     <option value="">Select Hall Type</option>
-                    <option value="Lawn">Lawn</option>
-                    <option value="Banquet Hall">Banquet Hall</option>
-                    <option value="Lawn + Banquet Hall">Lawn + Banquet Hall</option>
+                    <option value="Nirvana">Nirvana</option>
+                    <option value="Mandala">Mandala</option>
+                    <option value="Mandala and Nirvana">Mandala and Nirvana</option>
+                    <option value="Room Side Terrace">Room Side Terrace</option>
                   </select>
                   {errors.hall && (
                     <p className="text-red-500 text-xs mt-1">{errors.hall}</p>
@@ -1114,6 +1117,7 @@ const AddBooking = () => {
                             <option value="card">Card</option>
                             <option value="upi">UPI</option>
                             <option value="wallet">Wallet</option>
+                            <option value="cheque">Cheque</option>
                             <option value="other">Other</option>
                           </select>
                         </div>
@@ -1160,6 +1164,7 @@ const AddBooking = () => {
                     <option value="cash">Cash</option>
                     <option value="online">Online</option>
                     <option value="card">Card</option>
+                    <option value="cheque">Cheque</option>
                   </select>
                 </div>
 

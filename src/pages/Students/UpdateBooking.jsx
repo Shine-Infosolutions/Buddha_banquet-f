@@ -799,13 +799,16 @@ const UpdateBooking = () => {
                 <label className="block text-sm font-medium text-gray-700">
                   Time Slot
                 </label>
-                <input
-                  type="time"
+                <select
                   name="time"
                   className="w-full rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 py-2 px-3"
                   onChange={handleInputChange}
                   value={booking.time}
-                />
+                >
+                  <option value="">Select Time Slot</option>
+                  <option value="10:00 AM - 4:00 PM">10:00 AM - 4:00 PM</option>
+                  <option value="7:00 PM - 11:00 PM">7:00 PM - 11:00 PM</option>
+                </select>
               </div>
 
               {/* Hall */}
@@ -821,174 +824,10 @@ const UpdateBooking = () => {
                     onChange={handleInputChange}
                     value={booking.hall}
                   >
-                    <option value="Lawn">Lawn</option>
-                    <option value="Banquet Hall">Banquet Hall</option>
-                    <option value="Lawn + Banquet Hall">Lawn + Banquet Hall</option>
-                    <option value="Rooftop Hall">Rooftop Hall</option>
-                  </select>
-                </div>
-              </div>
-
-              {/* Room Options - Only show if hall is selected */}
-              {booking.hall && (
-                <div className="space-y-1">
-                  <label className="block text-sm font-medium text-gray-700">
-                    Room Option
-                  </label>
-                  <select
-                    name="roomOption"
-                    className="w-full rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 py-2 px-3"
-                    onChange={handleInputChange}
-                    value={booking.roomOption || "complimentary"}
-                  >
-                    <option value="complimentary">
-                      Complimentary Free Room
-                    </option>
-                    <option value="additional">Additional Room</option>
-                    <option value="both">
-                      Complimentary + Additional Room
-                    </option>
-                  </select>
-                </div>
-              )}
-
-              {/* Complimentary Rooms - Show only for complimentary or both options */}
-              {booking.hall &&
-                (booking.roomOption === "complimentary" ||
-                  booking.roomOption === "both") && (
-                  <div className="space-y-1">
-                    <label className="block text-sm font-medium text-gray-700">
-                      Complimentary Rooms
-                    </label>
-                    <input
-                      type="number"
-                      name="complimentaryRooms"
-                      min={0}
-                      className="w-full rounded-lg border border-gray-300 bg-gray-50 py-2 px-3"
-                      value={
-                        booking.complimentaryRooms === ""
-                          ? ""
-                          : booking.complimentaryRooms
-                      }
-                      onChange={(e) =>
-                        setBooking({
-                          ...booking,
-                          complimentaryRooms:
-                            e.target.value === "" ? "" : Number(e.target.value),
-                        })
-                      }
-                    />
-                    <div className="text-green-600 font-medium">FREE</div>
-                  </div>
-                )}
-
-              {/* Additional Rooms - Show only for additional or both options */}
-              {booking.hall &&
-                (booking.roomOption === "additional" ||
-                  booking.roomOption === "both") && (
-                  <div className="space-y-1">
-                    <label className="block text-sm font-medium text-gray-700">
-                      Additional Rooms
-                    </label>
-                    <input
-                      type="number"
-                      name="extraRooms"
-                      className="w-full rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 py-2 px-3"
-                      onChange={(e) => {
-                        const value = e.target.value;
-                        const extraRoomsNum =
-                          value === "" ? 0 : parseInt(value, 10);
-                        const pricePerRoomNum =
-                          booking.roomPricePerUnit === ""
-                            ? 0
-                            : parseFloat(booking.roomPricePerUnit);
-                        const extraRoomTotalPrice =
-                          pricePerRoomNum * extraRoomsNum;
-
-                        setBooking({
-                          ...booking,
-                          extraRooms: value, // keep as string for input
-                          rooms:
-                            booking.roomOption === "both"
-                              ? (2 + extraRoomsNum).toString()
-                              : value,
-                          extraRoomTotalPrice: extraRoomTotalPrice,
-                        });
-                      }}
-                      value={booking.extraRooms}
-                    />
-                  </div>
-                )}
-
-              {/* Room Price - only shown when extra rooms are added */}
-              {booking.hall &&
-                (booking.roomOption === "additional" ||
-                  booking.roomOption === "both") &&
-                booking.extraRooms > 0 && (
-                  <div className="space-y-1">
-                    <label className="block text-sm font-medium text-gray-700">
-                      Room Price (per room)
-                    </label>
-                    <div className="relative">
-                      <FaRupeeSign className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-                      <input
-                        type="number"
-                        name="roomPricePerUnit"
-                        className="pl-10 w-full rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 py-2 px-3"
-                        onChange={(e) => {
-                          const value = e.target.value;
-                          const pricePerRoomNum =
-                            value === "" ? 0 : parseFloat(value);
-                          const extraRoomsNum =
-                            booking.extraRooms === ""
-                              ? 0
-                              : parseInt(booking.extraRooms, 10);
-                          const extraRoomTotalPrice =
-                            pricePerRoomNum * extraRoomsNum;
-
-                          setBooking({
-                            ...booking,
-                            roomPricePerUnit: value, // keep as string for input
-                            extraRoomTotalPrice: extraRoomTotalPrice,
-                          });
-                        }}
-                        value={booking.roomPricePerUnit}
-                      />
-                    </div>
-                    <p className="text-sm font-medium text-[#c3ad6b] mt-1">
-                      Total: ₹
-                      {(() => {
-                        const extraRoomsNum =
-                          booking.extraRooms === ""
-                            ? 0
-                            : parseInt(booking.extraRooms, 10);
-                        const pricePerRoomNum =
-                          booking.roomPricePerUnit === ""
-                            ? 0
-                            : parseFloat(booking.roomPricePerUnit);
-                        return pricePerRoomNum * extraRoomsNum;
-                      })()}
-                    </p>
-                  </div>
-                )}
-
-              {/* Hall */}
-              <div className="space-y-1">
-                <label className="block text-sm font-medium text-gray-700">
-                  Hall Type
-                </label>
-                <div className="relative">
-                  <FaBuilding className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-                  <select
-                    name="hall"
-                    className="pl-10 w-full rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 py-2 px-3"
-                    onChange={handleInputChange}
-                    value={booking.hall}
-                  >
-                    <option value="Lawn">Lawn</option>
-                    <option value="Banquet Hall">Banquet Hall</option>
-                    <option value="Lawn + Banquet Hall">Lawn + Banquet Hall</option>
-                    <option value="Rooftop Hall">Rooftop Hall</option>
+                    <option value="Nirvana">Nirvana</option>
+                    <option value="Mandala">Mandala</option>
+                    <option value="Mandala and Nirvana">Mandala and Nirvana</option>
+                    <option value="Room Side Terrace">Room Side Terrace</option>
                   </select>
                 </div>
               </div>
@@ -1437,6 +1276,7 @@ const UpdateBooking = () => {
                           <option value="card">Card</option>
                           <option value="upi">UPI</option>
                           <option value="wallet">Wallet</option>
+                          <option value="cheque">Cheque</option>
                           <option value="other">Other</option>
                         </select>
                       </div>
@@ -1502,6 +1342,7 @@ const UpdateBooking = () => {
                   <option value="cash">Cash</option>
                   <option value="online">Online</option>
                   <option value="card">Card</option>
+                  <option value="cheque">Cheque</option>
                 </select>
               </div>
 
