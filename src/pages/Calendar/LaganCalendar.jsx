@@ -84,33 +84,92 @@ function LaganCalendar({ setSidebarOpen }) {
   const getAuspiciousDates = (year) => {
     const format = (m, d) =>
       `${year}-${String(m).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
-    return [
-      format(1, 16), format(1, 17), format(1, 18), format(1, 19), format(1, 21),
-      format(1, 22), format(1, 24), format(1, 25), format(1, 30), format(2, 3),
-      format(2, 4), format(2, 6), format(2, 7), format(2, 13), format(2, 14),
-      format(2, 15), format(2, 18), format(2, 19), format(2, 20), format(2, 21),
-      format(2, 25), format(3, 1), format(3, 2), format(3, 3), format(3, 5),
-      format(3, 6), format(4, 14), format(4, 16), format(4, 17), format(4, 18),
-      format(4, 19), format(4, 20), format(4, 21), format(4, 22), format(4, 23),
-      format(4, 25), format(4, 29), format(4, 30), format(5, 1), format(5, 5),
-      format(5, 6), format(5, 7), format(5, 8), format(5, 10), format(5, 15),
-      format(5, 17), format(5, 18), format(5, 19), format(5, 24), format(5, 28),
-      format(6, 2), format(6, 4), format(6, 7), format(6, 8), format(7, 11),
-      format(7, 12), format(7, 13), format(7, 17), format(7, 20), format(7, 21),
-      format(7, 22), format(7, 26), format(7, 28), format(7, 29), format(7, 31),
-      format(8, 1), format(8, 3), format(8, 4), format(8, 7), format(8, 8),
-      format(8, 9), format(8, 13), format(8, 14), format(8, 17), format(8, 24),
-      format(8, 25), format(8, 28), format(8, 29), format(8, 30), format(8, 31),
-      format(9, 1), format(9, 2), format(9, 3), format(9, 4), format(9, 5),
-      format(9, 26), format(9, 27), format(9, 28), format(10, 1), format(10, 2),
-      format(10, 3), format(10, 4), format(10, 7), format(10, 8), format(10, 10),
-      format(10, 11), format(10, 12), format(10, 22), format(10, 23), format(10, 24),
-      format(10, 25), format(10, 26), format(10, 27), format(10, 28), format(10, 29),
-      format(10, 30), format(10, 31), format(11, 2), format(11, 3), format(11, 4),
-      format(11, 7), format(11, 8), format(11, 12), format(11, 13), format(11, 22),
-      format(11, 23), format(11, 24), format(11, 25), format(11, 26), format(11, 27),
-      format(11, 29), format(11, 30), format(12, 4), format(12, 5), format(12, 6),
-    ];
+
+    const datesByYear = {
+      2025: [
+        // January 2025
+        format(1,16), format(1,17), format(1,18), format(1,19), format(1,20),
+        format(1,21), format(1,22), format(1,23), format(1,24), format(1,25),
+        format(1,27), format(1,28), format(1,29), format(1,30), format(1,31),
+        // February 2025
+        format(2,1), format(2,2), format(2,3), format(2,4), format(2,6),
+        format(2,7), format(2,12), format(2,13), format(2,14), format(2,16),
+        format(2,17), format(2,18), format(2,19), format(2,20), format(2,23),
+        format(2,24), format(2,25), format(2,26),
+        // March 2025
+        format(3,1), format(3,2), format(3,3), format(3,5), format(3,6),
+        format(3,7), format(3,8),
+        // April 2025 — Holashtak & Kharmas gap, limited dates
+        format(4,14), format(4,16), format(4,17), format(4,18), format(4,19),
+        format(4,20), format(4,21), format(4,22), format(4,23), format(4,25),
+        format(4,27), format(4,28), format(4,29), format(4,30),
+        // May 2025
+        format(5,1), format(5,2), format(5,5), format(5,6), format(5,7),
+        format(5,8), format(5,9), format(5,10), format(5,12), format(5,13),
+        format(5,14), format(5,15), format(5,17), format(5,18), format(5,19),
+        format(5,20), format(5,22), format(5,24), format(5,25), format(5,26),
+        format(5,28), format(5,29), format(5,30),
+        // June 2025
+        format(6,1), format(6,2), format(6,4), format(6,5), format(6,7), format(6,8),
+        // July 2025 — Devshayani Ekadashi starts (no marriages)
+        // August-September 2025 — Chaturmas (no marriages)
+        // October 2025 — Dev Uthani Ekadashi resumes
+        format(10,22), format(10,23), format(10,24), format(10,25), format(10,26),
+        format(10,27), format(10,28), format(10,29), format(10,30), format(10,31),
+        // November 2025
+        format(11,1), format(11,2), format(11,3), format(11,4), format(11,5),
+        format(11,6), format(11,7), format(11,8), format(11,10), format(11,11),
+        format(11,12), format(11,13), format(11,17), format(11,18), format(11,19),
+        format(11,20), format(11,21), format(11,22), format(11,23), format(11,24),
+        format(11,25), format(11,26), format(11,27), format(11,28), format(11,29),
+        format(11,30),
+        // December 2025
+        format(12,1), format(12,2), format(12,3), format(12,4), format(12,5),
+        format(12,6), format(12,7), format(12,8), format(12,9), format(12,10),
+      ],
+      2026: [
+        // January 2026
+        format(1,14), format(1,15), format(1,16), format(1,17), format(1,18),
+        format(1,19), format(1,20), format(1,21), format(1,22), format(1,23),
+        format(1,24), format(1,25), format(1,26), format(1,27), format(1,28),
+        format(1,29), format(1,30), format(1,31),
+        // February 2026
+        format(2,1), format(2,2), format(2,3), format(2,4), format(2,5),
+        format(2,6), format(2,7), format(2,9), format(2,10), format(2,11),
+        format(2,12), format(2,13), format(2,14), format(2,16), format(2,17),
+        format(2,18), format(2,19), format(2,20), format(2,23), format(2,24),
+        format(2,25), format(2,26), format(2,27),
+        // March 2026
+        format(3,1), format(3,2), format(3,3), format(3,4), format(3,5),
+        format(3,6), format(3,7), format(3,9), format(3,10),
+        // April 2026
+        format(4,15), format(4,16), format(4,17), format(4,18), format(4,19),
+        format(4,20), format(4,21), format(4,22), format(4,23), format(4,24),
+        format(4,25), format(4,27), format(4,28), format(4,29), format(4,30),
+        // May 2026
+        format(5,1), format(5,2), format(5,4), format(5,5), format(5,6),
+        format(5,7), format(5,8), format(5,9), format(5,11), format(5,12),
+        format(5,13), format(5,14), format(5,15), format(5,18), format(5,19),
+        format(5,20), format(5,21), format(5,22), format(5,25), format(5,26),
+        format(5,27), format(5,28), format(5,29),
+        // June 2026
+        format(6,1), format(6,2), format(6,3), format(6,4), format(6,5),
+        format(6,6), format(6,8), format(6,9), format(6,10),
+        // July 2026 — Devshayani Ekadashi (no marriages)
+        // Oct-Nov 2026 — Dev Uthani Ekadashi resumes
+        format(10,28), format(10,29), format(10,30), format(10,31),
+        format(11,1), format(11,2), format(11,3), format(11,4), format(11,5),
+        format(11,6), format(11,7), format(11,9), format(11,10), format(11,11),
+        format(11,12), format(11,13), format(11,16), format(11,17), format(11,18),
+        format(11,19), format(11,20), format(11,23), format(11,24), format(11,25),
+        format(11,26), format(11,27), format(11,28), format(11,29), format(11,30),
+        // December 2026
+        format(12,1), format(12,2), format(12,3), format(12,4), format(12,5),
+        format(12,7), format(12,8), format(12,9), format(12,10),
+      ],
+    };
+
+    return datesByYear[year] || [];
   };
 
   const auspiciousDates = new Set(getAuspiciousDates(year));
