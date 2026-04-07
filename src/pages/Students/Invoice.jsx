@@ -355,54 +355,108 @@ const Invoice = () => {
                 Payment Summary
               </h3>
               <div className="bg-gray-50 rounded-lg p-6 print:bg-white print:p-2 print:border print:border-gray-300">
-                <div className="space-y-3 print:space-y-1 print:text-xs print:text-black">
-                  <div className="flex justify-between">
-                    <span>Subtotal ({booking.pax} pax × ₹{booking.ratePerPax})</span>
-                    <span>₹{(booking.pax * booking.ratePerPax).toFixed(2)}</span>
-                  </div>
-                  {booking.discount > 0 && (
-                    <div className="flex justify-between text-green-600">
-                      <span>Discount ({booking.discount}%)</span>
-                      <span>-₹{(() => {
-                        const subtotal = booking.pax * booking.ratePerPax;
-                        const discountAmount = (subtotal * booking.discount) / 100;
-                        return discountAmount.toFixed(2);
-                      })()}</span>
+                {(() => {
+                  const pax = booking.pax || 0;
+                  const ratePerPax = booking.ratePerPax || 0;
+                  const gstPercent = Number(booking.gst) || 0;
+                  const decorationCharge = booking.decorationCharge || 0;
+                  const musicCharge = booking.musicCharge || 0;
+                  const extraRoomCharge = booking.extraRoomTotalPrice || 0;
+                  const discountPercent = booking.discount || 0;
+
+                  // Base food amount (before GST)
+                  const baseRatePerPax = gstPercent > 0
+                    ? ratePerPax / (1 + gstPercent / 100)
+                    : ratePerPax;
+                  const taxableFood = baseRatePerPax * pax;
+                  const taxableExtras = decorationCharge + musicCharge + extraRoomCharge;
+                  const taxableAmount = taxableFood + taxableExtras;
+
+                  // Discount on taxable amount
+                  const discountAmount = discountPercent > 0 ? (taxableAmount * discountPercent / 100) : 0;
+                  const taxableAfterDiscount = taxableAmount - discountAmount;
+
+                  // GST split
+                  const totalGSTAmount = gstPercent > 0 ? (taxableAfterDiscount * gstPercent / 100) : 0;
+                  const cgst = totalGSTAmount / 2;
+                  const sgst = totalGSTAmount / 2;
+
+                  const grandTotal = taxableAfterDiscount + totalGSTAmount;
+                  const totalAdvance = Array.isArray(booking.advance)
+                    ? booking.advance.reduce((sum, adv) => sum + (adv.amount || 0), 0)
+                    : (booking.advance || 0);
+                  const balance = booking.balance || 0;
+
+                  return (
+                    <div className="space-y-2 print:space-y-1 print:text-xs print:text-black">
+                      {/* Line items */}
+                      <div className="flex justify-between text-sm print:text-xs">
+                        <span className="text-gray-600">Food ({pax} pax × ₹{baseRatePerPax.toFixed(2)})</span>
+                        <span>₹{taxableFood.toFixed(2)}</span>
+                      </div>
+                      {decorationCharge > 0 && (
+                        <div className="flex justify-between text-sm print:text-xs">
+                          <span className="text-gray-600">Decoration Charge</span>
+                          <span>₹{decorationCharge}</span>
+                        </div>
+                      )}
+                      {musicCharge > 0 && (
+                        <div className="flex justify-between text-sm print:text-xs">
+                          <span className="text-gray-600">Music Charge</span>
+                          <span>₹{musicCharge}</span>
+                        </div>
+                      )}
+                      {extraRoomCharge > 0 && (
+                        <div className="flex justify-between text-sm print:text-xs">
+                          <span className="text-gray-600">Additional Rooms</span>
+                          <span>₹{extraRoomCharge}</span>
+                        </div>
+                      )}
+                      {discountAmount > 0 && (
+                        <div className="flex justify-between text-sm text-green-600 print:text-xs">
+                          <span>Discount ({discountPercent}%)</span>
+                          <span>-₹{discountAmount.toFixed(2)}</span>
+                        </div>
+                      )}
+
+                      {/* Taxable Amount */}
+                      <div className="border-t border-gray-200 pt-2 mt-2 flex justify-between text-sm font-medium print:text-xs">
+                        <span>Taxable Amount</span>
+                        <span>₹{taxableAfterDiscount.toFixed(2)}</span>
+                      </div>
+
+                      {/* GST Breakdown — only show if GST > 0 */}
+                      {gstPercent > 0 && (
+                        <>
+                          <div className="flex justify-between text-sm text-gray-600 print:text-xs">
+                            <span>CGST ({gstPercent / 2}%)</span>
+                            <span>₹{cgst.toFixed(2)}</span>
+                          </div>
+                          <div className="flex justify-between text-sm text-gray-600 print:text-xs">
+                            <span>SGST ({gstPercent / 2}%)</span>
+                            <span>₹{sgst.toFixed(2)}</span>
+                          </div>
+                        </>
+                      )}
+
+                      {/* Grand Total */}
+                      <div className="border-t border-gray-300 pt-3 mt-2 space-y-2 print:space-y-1">
+                        <div className="flex justify-between text-lg font-bold print:text-sm">
+                          <span>Total Amount</span>
+                          <span className="text-[#c3ad6b]">₹{grandTotal.toFixed(2)}</span>
+                        </div>
+                        <div className="flex justify-between text-sm text-green-600 print:text-xs">
+                          <span>Advance Paid</span>
+                          <span>₹{totalAdvance.toFixed(2)}</span>
+                        </div>
+                        <div className="flex justify-between text-lg font-bold text-red-600 print:text-sm">
+                          <span>Balance Due</span>
+                          <span>₹{balance}</span>
+                        </div>
+                      </div>
                     </div>
-                  )}
-                  {booking.decorationCharge > 0 && (
-                    <div className="flex justify-between">
-                      <span>Decoration Charge</span>
-                      <span>₹{booking.decorationCharge}</span>
-                    </div>
-                  )}
-                  {booking.musicCharge > 0 && (
-                    <div className="flex justify-between">
-                      <span>Music Charge</span>
-                      <span>₹{booking.musicCharge}</span>
-                    </div>
-                  )}
-                  {booking.extraRoomTotalPrice > 0 && (
-                    <div className="flex justify-between">
-                      <span>Additional Rooms</span>
-                      <span>₹{booking.extraRoomTotalPrice}</span>
-                    </div>
-                  )}
-                  <div className="border-t border-gray-300 pt-3">
-                    <div className="flex justify-between text-lg font-semibold">
-                      <span>Total Amount</span>
-                      <span className="text-[#c3ad6b]">₹{booking.total}</span>
-                    </div>
-                    <div className="flex justify-between text-green-600">
-                      <span>Advance Paid</span>
-                      <span>₹{Array.isArray(booking.advance) ? booking.advance.reduce((sum, adv) => sum + (adv.amount || 0), 0) : (booking.advance || 0)}</span>
-                    </div>
-                    <div className="flex justify-between text-lg font-bold text-red-600">
-                      <span>Balance Due</span>
-                      <span>₹{booking.balance || 0}</span>
-                    </div>
-                  </div>
-                </div>
+                  );
+                })()}
               </div>
             </div>
 
