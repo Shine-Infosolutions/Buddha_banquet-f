@@ -10,6 +10,7 @@ import {
 } from "react-icons/fa";
 import { motion } from "framer-motion";
 import { useAppContext } from '../../context/AppContext';
+import { bookingAPI } from '../../services/api';
 import DashboardLoader from '../../DashboardLoader';
 import useWebSocket from '../../hooks/useWebSocket';
 import WebSocketStatus from '../../components/WebSocketStatus';
@@ -373,12 +374,10 @@ function LaganCalendar({ setSidebarOpen }) {
 
   const fetchBookings = async () => {
     try {
-      const response = await fetch('https://shine-banquet-hotel-backend.vercel.app/api/bookings/');
-      const data = await response.json();
+      const response = await bookingAPI.getAll();
+      const data = response.data;
       
       let bookingsArray = [];
-      
-      // Handle different response structures
       if (Array.isArray(data)) {
         bookingsArray = data;
       } else if (data.success && Array.isArray(data.data)) {
