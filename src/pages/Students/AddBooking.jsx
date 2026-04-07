@@ -1467,33 +1467,9 @@ const AddBooking = () => {
       {/* Menu Selector Modal */}
       {showMenuSelector && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 backdrop-blur-sm">
-          <div className="bg-white rounded-xl shadow-xl w-full max-w-5xl max-h-[90vh] overflow-hidden animate-scale-in">
-            <div className="p-4 border-b border-gray-200 flex justify-between items-center">
-              <h3 className="text-lg font-semibold text-gray-800">
-                Select Menu Items
-              </h3>
-              <button
-                onClick={() => setShowMenuSelector(false)}
-                className="text-gray-500 hover:text-gray-700 focus:outline-none"
-              >
-                <svg
-                  className="h-6 w-6"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M6 18L18 6M6 6l12 12"
-                  />
-                </svg>
-              </button>
-            </div>
+          <div className="bg-white rounded-xl shadow-xl w-full max-w-6xl max-h-[95vh] overflow-hidden animate-scale-in">
             <div
-              className="p-6 overflow-y-auto"
-              style={{ maxHeight: "calc(90vh - 68px)" }}
+              className="overflow-y-auto h-[95vh]"
             >
               <MenuSelector
                 onSave={handleSaveMenu}

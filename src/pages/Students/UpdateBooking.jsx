@@ -1502,16 +1502,7 @@ const UpdateBooking = () => {
           {/* Menu Selection Modal */}
           {showMenuModal && (
             <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-              <div className="bg-white rounded-lg p-6 w-full max-w-4xl max-h-[90vh] overflow-y-auto">
-                <div className="flex justify-between items-center mb-4">
-                  <h3 className="text-xl font-semibold">Select Menu Items</h3>
-                  <button
-                    onClick={() => setShowMenuModal(false)}
-                    className="text-gray-500 hover:text-gray-700"
-                  >
-                    &times;
-                  </button>
-                </div>
+              <div className="bg-white rounded-lg w-full max-w-6xl max-h-[95vh] overflow-y-auto">
                 <MenuSelector
                   initialItems={
                     booking.menuItems && booking.menuItems.length > 0 
