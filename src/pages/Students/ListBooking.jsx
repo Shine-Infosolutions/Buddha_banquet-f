@@ -1,11 +1,15 @@
 import React, { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import { bookingAPI } from "../../services/api";
+import { bookingAPI, menuAPI } from "../../services/api";
 import { AiFillFileExcel } from "react-icons/ai";
 import { FiSearch, FiX, FiPlus, FiEdit, FiEye, FiFileText, FiTrash2, FiMenu } from "react-icons/fi";
 import { FaWhatsapp, FaList } from "react-icons/fa";
 import { motion, AnimatePresence } from "framer-motion";
 import ChefPDFPreview from "../ChefPDFPreview";
+import html2canvas from "html2canvas";
+import jsPDF from "jspdf";
+import Logo from "../../assets/buddha avenue.png";
+import WaterMark from "../../assets/buddha avenue.png";
 
 const debounce = (func, delay) => {
   let timeoutId;
@@ -24,6 +28,10 @@ const statusStyle = (status) => {
 const ListBooking = ({ setSidebarOpen }) => {
   const tableRef = useRef(null);
   const debounceTimeoutRef = useRef(null);
+  const invoiceRenderRef = useRef(null);
+  const termsRenderRef = useRef(null);
+  const [pdfItem, setPdfItem] = useState(null);
+  const [generatingPDF, setGeneratingPDF] = useState(false);
   const [userData, setUserData] = useState([]);
   const [loading, setLoading] = useState(false);
   const [pageLoading, setPageLoading] = useState(true);
@@ -139,43 +147,60 @@ const ListBooking = ({ setSidebarOpen }) => {
     document.body.removeChild(link); window.URL.revokeObjectURL(url);
   };
 
-  const sendWhatsApp = (item) => {
+  const sendWhatsApp = async (item) => {
     let raw = String(item.whatsapp || item.number || "").replace(/\D/g, "").replace(/^0+/, "");
     let phone = raw.length === 10 ? `91${raw}` : raw.length === 12 && raw.startsWith("91") ? raw : null;
     if (!phone) { alert("Invalid phone number."); return; }
-    const invoiceLink = `${window.location.origin}/banquet/invoice/${item._id}`;
-    const msg = `🌟 *Buddha Avenue Banquet - Booking Confirmation* 🌟
 
-Dear *${item.name}*, your booking has been confirmed! 🎉
+    setGeneratingPDF(true);
+    setPdfItem(item);
+    await new Promise(r => setTimeout(r, 300));
 
-━━━━━━━━━━━━━━━━━━━━
-📋 *BOOKING DETAILS*
-━━━━━━━━━━━━━━━━━━━━
-📅 *Date:* ${new Date(item.startDate).toLocaleDateString("en-IN", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}
-⏰ *Time:* ${item.time || "TBC"}
-🏛️ *Hall:* ${item.hall}
-👥 *Guests:* ${item.pax || "TBC"} pax
-🍽️ *Rate Plan:* ${item.ratePlan}
-🥗 *Food Type:* ${item.foodType}
-🔄 *Status:* ${item.bookingStatus}
+    const patchAndCapture = async (element) => {
+      const clone = element.cloneNode(true);
+      clone.style.cssText = "position:fixed;top:0;left:0;width:794px;background:#fff;z-index:-9999;";
+      document.body.appendChild(clone);
+      clone.querySelectorAll("*").forEach(el => {
+        const computed = window.getComputedStyle(el);
+        const bg = computed.getPropertyValue("background-color");
+        const color = computed.getPropertyValue("color");
+        const border = computed.getPropertyValue("border-color");
+        if (bg && (bg.includes("oklab") || bg.includes("oklch"))) el.style.setProperty("background-color", "transparent", "important");
+        if (color && (color.includes("oklab") || color.includes("oklch"))) el.style.setProperty("color", "#1a1a1a", "important");
+        if (border && (border.includes("oklab") || border.includes("oklch"))) el.style.setProperty("border-color", "#e5e7eb", "important");
+      });
+      const canvas = await html2canvas(clone, { scale: 2, useCORS: true, allowTaint: true, backgroundColor: "#ffffff", width: 794, windowWidth: 794 });
+      document.body.removeChild(clone);
+      return canvas;
+    };
 
-━━━━━━━━━━━━━━━━━━━━
-💰 *PAYMENT SUMMARY*
-━━━━━━━━━━━━━━━━━━━━
-💵 *Total Amount:* ₹${item.total || "TBC"}
-✅ *Advance Paid:* ₹${item.advance}
-🔴 *Balance Due:* ₹${item.balance || "TBC"}
+    const addCanvasToPDF = (pdf, canvas, isFirst) => {
+      const imgData = canvas.toDataURL("image/jpeg", 0.98);
+      const pageWidth = pdf.internal.pageSize.getWidth();
+      const pageHeight = pdf.internal.pageSize.getHeight();
+      const imgHeight = (canvas.height * pageWidth) / canvas.width;
+      let y = 0;
+      while (y < imgHeight) {
+        if (!isFirst || y > 0) pdf.addPage();
+        pdf.addImage(imgData, "JPEG", 0, -y, pageWidth, imgHeight);
+        y += pageHeight;
+      }
+    };
 
-━━━━━━━━━━━━━━━━━━━━
-🧾 *VIEW YOUR INVOICE*
-━━━━━━━━━━━━━━━━━━━━
-${invoiceLink}
+    try {
+      const pdf = new jsPDF({ unit: "mm", format: "a4", orientation: "portrait" });
+      const canvas1 = await patchAndCapture(invoiceRenderRef.current);
+      addCanvasToPDF(pdf, canvas1, true);
+      const canvas2 = await patchAndCapture(termsRenderRef.current);
+      addCanvasToPDF(pdf, canvas2, false);
+      pdf.save(`Invoice_${item.name}_${new Date(item.startDate).toLocaleDateString("en-GB").replace(/\//g, "-")}.pdf`);
 
-📍 *Buddha Avenue Banquet*
-Medical Road, Gorakhpur
-
-Thank you for choosing us! 🙏`;
-    window.open(`https://wa.me/${phone}?text=${encodeURIComponent(msg)}`, "_blank");
+      const msg = `Hi *${item.name}*, please find your booking invoice attached above.\n\n📅 *Date:* ${new Date(item.startDate).toLocaleDateString("en-IN", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}\n🏛️ *Hall:* ${item.hall}\n👥 *Guests:* ${item.pax} pax\n💰 *Total:* ₹${item.total}\n🔴 *Balance Due:* ₹${item.balance}\n\n_Buddha Avenue Banquet, Medical Road, Gorakhpur_ 🙏`;
+      setTimeout(() => window.open(`https://wa.me/${phone}?text=${encodeURIComponent(msg)}`, "_blank"), 1000);
+    } finally {
+      setGeneratingPDF(false);
+      setPdfItem(null);
+    }
   };
 
   const maxPage = Math.ceil(totalPages / 10);
@@ -444,6 +469,136 @@ Thank you for choosing us! 🙏`;
                 </button>
               </div>
             </div>
+          </div>
+        </div>
+      )}
+      {/* Hidden invoice renderer for PDF generation */}
+      {pdfItem && (
+        <div ref={invoiceRenderRef} style={{ position: 'fixed', top: 0, left: 0, width: '794px', background: '#fff', zIndex: -9999, pointerEvents: 'none' }}>
+          <div className="relative overflow-hidden">
+            <img src={WaterMark} alt="" style={{ position: 'absolute', opacity: 0.12, width: '30%', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', pointerEvents: 'none' }} />
+            <div style={{ position: 'relative', zIndex: 10 }}>
+              <div style={{ background: 'rgba(195,173,107,0.1)', borderBottom: '1px solid rgba(195,173,107,0.3)', padding: '16px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                  <img src={Logo} alt="Buddha Avenue" style={{ width: 80, height: 80, objectFit: 'contain' }} />
+                  <div>
+                    <div style={{ fontSize: 20, fontWeight: 'bold', color: '#1f2937' }}>Buddha Avenue Banquet</div>
+                    <div style={{ fontSize: 14, color: '#6b7280' }}>Booking Invoice</div>
+                  </div>
+                </div>
+                <div style={{ textAlign: 'right' }}>
+                  <div style={{ fontSize: 14, color: '#6b7280' }}>Invoice Date</div>
+                  <div style={{ fontSize: 16, fontWeight: 600, color: '#374151' }}>{new Date().toLocaleDateString('en-IN', { year: 'numeric', month: 'long', day: 'numeric' })}</div>
+                </div>
+              </div>
+              <div style={{ padding: '16px 24px', display: 'flex', flexDirection: 'column', gap: 16 }}>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+                  {[['Customer Details', [['Name', pdfItem.name], ['Mobile', pdfItem.phone || pdfItem.number], pdfItem.email && ['Email', pdfItem.email], pdfItem.whatsapp && ['WhatsApp', pdfItem.whatsapp]].filter(Boolean)],
+                    ['Booking Details', [['Date', new Date(pdfItem.startDate).toLocaleDateString('en-IN', { year: 'numeric', month: 'long', day: 'numeric' })], ['Time', pdfItem.time], ['Hall', pdfItem.hall], ['Guests', `${pdfItem.pax} pax`], ['Status', pdfItem.bookingStatus]]]]
+                  .map(([title, rows]) => (
+                    <div key={title} style={{ border: '1px solid #e5e7eb', borderRadius: 8, padding: 12 }}>
+                      <div style={{ fontSize: 13, fontWeight: 'bold', color: '#c3ad6b', textTransform: 'uppercase', marginBottom: 8, borderBottom: '1px solid #f3f4f6', paddingBottom: 4 }}>{title}</div>
+                      {rows.map(([k, v]) => <div key={k} style={{ fontSize: 15, color: '#374151', marginBottom: 2 }}><b>{k}:</b> {v}</div>)}
+                    </div>
+                  ))}
+                </div>
+                <div style={{ border: '1px solid #e5e7eb', borderRadius: 8, padding: 12 }}>
+                  <div style={{ fontSize: 13, fontWeight: 'bold', color: '#c3ad6b', textTransform: 'uppercase', marginBottom: 8, borderBottom: '1px solid #f3f4f6', paddingBottom: 4 }}>Package Details</div>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 4, fontSize: 15, color: '#374151', marginBottom: 8 }}>
+                    <div><b>Rate Plan:</b> {pdfItem.ratePlan}</div>
+                    <div><b>Food Type:</b> {pdfItem.foodType}</div>
+                    <div><b>Rate per Pax:</b> ₹{pdfItem.ratePerPax}</div>
+                    <div><b>Meal Plan:</b> {pdfItem.mealPlan || 'Without Breakfast'}</div>
+                  </div>
+                </div>
+                <div style={{ border: '1px solid #e5e7eb', borderRadius: 8, padding: 12 }}>
+                  <div style={{ fontSize: 13, fontWeight: 'bold', color: '#c3ad6b', textTransform: 'uppercase', marginBottom: 8, borderBottom: '1px solid #f3f4f6', paddingBottom: 4 }}>Payment Summary</div>
+                  <div style={{ fontSize: 14, color: '#374151' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 2 }}><span>Food ({pdfItem.pax} pax × ₹{pdfItem.ratePerPax})</span><span>₹{(pdfItem.pax * pdfItem.ratePerPax).toFixed(2)}</span></div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 'bold', fontSize: 15, borderTop: '1px solid #d1d5db', paddingTop: 6, marginTop: 4 }}><span>Total Amount</span><span style={{ color: '#c3ad6b' }}>₹{pdfItem.total}</span></div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', color: '#16a34a' }}><span>Advance Paid</span><span>₹{pdfItem.advance}</span></div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 'bold', color: '#dc2626' }}><span>Balance Due</span><span>₹{pdfItem.balance}</span></div>
+                  </div>
+                </div>
+                <div style={{ textAlign: 'center', fontSize: 14, color: '#6b7280', borderTop: '1px solid #e5e7eb', paddingTop: 12 }}>Thank you for choosing Buddha Avenue Banquet!</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Hidden terms renderer for PDF generation */}
+      {pdfItem && (
+        <div ref={termsRenderRef} style={{ position: 'fixed', top: 0, left: 0, width: '794px', background: '#fff', zIndex: -9999, pointerEvents: 'none' }}>
+          <div style={{ position: 'relative', overflow: 'hidden' }}>
+            <img src={WaterMark} alt="" style={{ position: 'absolute', opacity: 0.12, width: '30%', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', pointerEvents: 'none' }} />
+            <div style={{ position: 'relative', zIndex: 10 }}>
+              <div style={{ background: '#f7f5ef', padding: '16px 32px', display: 'flex', alignItems: 'center', gap: 12 }}>
+                <img src={Logo} alt="Buddha Avenue" style={{ width: 48, height: 48, objectFit: 'contain' }} />
+                <div>
+                  <div style={{ fontWeight: 'bold', color: '#1f2937', fontSize: 16 }}>Buddha Avenue Banquet</div>
+                  <div style={{ fontSize: 12, color: '#6b7280' }}>Terms &amp; Conditions</div>
+                </div>
+              </div>
+              <div style={{ padding: '24px 32px' }}>
+                <div style={{ fontSize: 16, fontWeight: 'bold', color: '#c3ad6b', borderBottom: '2px solid rgba(195,173,107,0.3)', paddingBottom: 8, marginBottom: 16 }}>TERMS &amp; CONDITIONS OF BOOKING</div>
+                <ol style={{ listStyle: 'none', padding: 0, margin: 0 }}>
+                  {[
+                    "CONFIRMATION OF BANQUET HALL/VENUE IS SUBJECT TO ITS AVAILABILITY ON THE DATE OF RECEIPT OF ADVANCE AMOUNT. TILL SUCH TIME, YOUR BOOKING WOULD BE TREATED AS TENTATIVE AND WOULD LIABLE TO BE CANCELLED WITHOUT PRIOR NOTICE, BASED ON OUR HOTEL POLICY OF \"FIRST COME FIRST SERVE\" AGAINST THE CONFIRMED BOOKING.",
+                    "50% ADVANCE ON CONFIRMATION AND THE REST AMOUNT SHOULD BE SETTLED FIFTEEN DAYS BEFORE THE FUNCTION DATE.",
+                    "DAY EVENT SESSION: 10:00 HOURS TILL 15:00 HOURS. EVENING EVENT SESSION: 19:30 HOURS TILL 23:30 HOURS.",
+                    "ADVANCE PAYMENT CANNOT BE REFUNDABLE.",
+                    "FULL PAYMENT OF THE PACKAGE SHOULD BE DONE AT LEAST 15 DAYS (FIFTEEN DAYS) BEFORE THE FUNCTION DATE. HOTEL RESERVES THE RIGHT TO CANCEL THE BOOKING IF PAYMENT IS NOT DONE ON TIME, THIS WILL AVOID LAST MINUTE NOC ISSUES.",
+                    "CHEQUE WILL BE ACCEPTED 20 DAYS PRIOR TO THE EVENT. NO PDC WILL BE ENTERTAINED.",
+                    "MENU & OTHER EVENT DETAILS TO BE DECIDED MINIMUM 10 DAYS PRIOR TO THE EVENT. AFTER THE DUE DATE, CHEF CHOICE MENU WILL BE APPLICABLE.",
+                    "HOTEL RESERVES THE RIGHT TO REVISE THE RATES FOR ANY REDUCTION IN THE NUMBER OF PEOPLE.",
+                    "RATES QUOTED WILL BE APPLICABLE FOR THE SPECIFIC FUNCTION ONLY AND SUBJECT TO CONFIRMATION FROM YOUR END WITHIN 5 DAYS FROM THE DATE OF THE QUOTATION, AFTER WHICH THEY WILL LAPSE.",
+                    "THE CHARGES WOULD BE MADE AS PER THE GUARANTEED NUMBER OF PERSONS. ALL APPLICABLE GST AS EXTRA.",
+                    "FULL MENU ITEMS CANNOT BE SERVED ON THE TABLE FOR ANY VIP OR SPECIAL GUEST.",
+                    "D.J / SOUND / MUSIC / ORCHESTRA / BAR TIMINGS TILL 22:30 HRS ONLY.",
+                    "NO CSD, DUTY FREE LIQUORS ARE ALLOWED. ONLY U.P SALES LIQUOR IS ALLOWED.",
+                    "NO LEFTOVER FOOD WILL BE PACKED EVEN IF PLATES CONSUMED ARE LESS THAN THE GUARANTEED NUMBER OF PEOPLE.",
+                    "STARTER WILL BE SERVED ONLY (90 MINUTES) FROM THE BEGINNING OF THE EVENT.",
+                    "IN CASE THE BAR TEAM IS APPOINTED WITH OUTSIDE STAFF THEN, ITEMS LIKE SODA, SOFT DRINKS, JUICES, AND ICE-CUBES ETC. WILL NOT BE PART OF OUR PACKAGE.",
+                    "EXTRA USAGE OF THE VENUE BEYOND THE SPECIFIED TIME WOULD BE CHARGED EXTRA ON AN HOURLY BASIS AND IT WOULD BE RS. 15,000/- PER HOUR.",
+                    "THE HOTEL DOES NOT PERMIT DECORATORS FROM OUTSIDE OTHER THAN THE ONES ON THE HOTEL'S EMPANELMENT.",
+                    "ANY OTHER CHARGES SUCH AS GATE PASS WILL BE GUEST LIABILITY.",
+                    "THE HALL SHOULD BE VACATED ON OR BEFORE THE END TIME MENTIONED IN THIS CONTRACT. IN CASE OF EXTENSION OF TIME, APPLICABLE CHARGES WILL BE LEVIED ON AN HOURLY BASIS SUBJECT TO ITS AVAILABILITY.",
+                    "KINDLY NOTE THAT THE HOTEL DOES NOT ALLOW FIRE CRACKERS, DHOL GHODI, BAND WITHIN OR AROUND THE VICINITY OF THE PREMISES.",
+                    "ELECTRICITY CONSUMPTION SHOULD BE UP TO 03 KW ONLY. ABOVE WILL BE CHARGED @ INR 1000 + GST PER KWH ACCORDINGLY.",
+                    "PETS, ARMS & AMMUNITION IS STRICTLY PROHIBITED INSIDE THE PREMISES.",
+                    "WE WILL NOT PROVIDE QUARTER PLATES FOR ANY MAIN COURSE FOOD ITEMS.",
+                    "FOOD SHALL BE PREPARED ONLY FOR 110% OF THE NUMBER OF GUESTS GUARANTEED. SHOULD THE NUMBER OF PERSONS EXCEED 110% OF THE GUARANTEED NUMBER, THE HOTEL WOULD BE UNABLE TO ENSURE CONSISTENCY IN THE QUALITY OF FOOD & SERVICES.",
+                    "ANY ADDITION BEYOND THE EXPECTED NUMBER OF GUESTS WOULD ATTRACT AN ADDITIONAL CHARGE (SURCHARGE) OF 20% OF THE RATE APPLICABLE. ONLY AGAINST ADVANCE PAYMENT FOOD CAN BE SERVED TO EXTRA GUESTS.",
+                    "IPRS OR PPL LICENSE WILL BE APPLICABLE ON (LIVE PERFORMANCES, D.J, SANGEET, DANCE, ETC). WITHOUT LICENSE, EVENT WILL NOT BE ENTERTAINED IN THE PREMISES. ALL LIABILITIES RELATED TO THE LICENSES ARE TO BE BORNE BY THE GUEST. THE HOTEL WILL NOT BE RESPONSIBLE FOR ANY LAPSES.",
+                  ].map((term, i) => (
+                    <li key={i} style={{ display: 'flex', gap: 8, marginBottom: 6, fontSize: 12, color: '#111827' }}>
+                      <span style={{ fontWeight: 'bold', color: '#c3ad6b', flexShrink: 0 }}>{i + 1}.</span>
+                      <span>{term}</span>
+                    </li>
+                  ))}
+                </ol>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 32, marginTop: 40 }}>
+                  {[['Guest Signature', 'Name: ___________________', 'Date: ____________________'], ['Authorized Signatory', 'Buddha Avenue Banquet', 'Date: ____________________']].map(([title, line1, line2]) => (
+                    <div key={title} style={{ textAlign: 'center' }}>
+                      <div style={{ borderTop: '2px solid #9ca3af', paddingTop: 8, marginTop: 48 }}>
+                        <div style={{ fontSize: 13, fontWeight: 600, color: '#374151' }}>{title}</div>
+                        <div style={{ fontSize: 12, color: '#6b7280' }}>{line1}</div>
+                        <div style={{ fontSize: 12, color: '#6b7280' }}>{line2}</div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+      {generatingPDF && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="bg-white rounded-xl px-8 py-6 flex flex-col items-center gap-3 shadow-xl">
+            <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-[#c3ad6b]"></div>
+            <p className="text-gray-700 font-medium">Generating PDF...</p>
           </div>
         </div>
       )}
