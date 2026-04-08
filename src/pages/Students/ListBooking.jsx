@@ -143,8 +143,39 @@ const ListBooking = ({ setSidebarOpen }) => {
     let raw = String(item.whatsapp || item.number || "").replace(/\D/g, "").replace(/^0+/, "");
     let phone = raw.length === 10 ? `91${raw}` : raw.length === 12 && raw.startsWith("91") ? raw : null;
     if (!phone) { alert("Invalid phone number."); return; }
-    const msg = `🌟 *Welcome to Buddha Avenue Banquet* 🌟\n\n📅 *Date:* ${new Date(item.startDate).toLocaleDateString("en-IN", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}\n⏰ *Time:* ${item.time || "TBC"}\n👤 *Guest:* ${item.name}\n📞 *Contact:* ${item.number}\n🍽️ *Plan:* ${item.ratePlan}\n🥗 *Food:* ${item.foodType}\n🏛️ *Hall:* ${item.hall}\n👥 *Pax:* ${item.pax || "TBC"}\n🔄 *Status:* ${item.bookingStatus}\n\n💵 *Total:* ₹${item.total || "TBC"}\n💳 *Advance:* ₹${item.advance}\n💸 *Balance:* ₹${item.balance || "TBC"}\n\n📍 Medical Road, Gorakhpur\n\nThank you! 🙏`;
-    window.open(`https://web.whatsapp.com/send/?phone=${phone}&text=${encodeURIComponent(msg)}`, "_blank");
+    const invoiceLink = `${window.location.origin}/banquet/invoice/${item._id}`;
+    const msg = `🌟 *Buddha Avenue Banquet - Booking Confirmation* 🌟
+
+Dear *${item.name}*, your booking has been confirmed! 🎉
+
+━━━━━━━━━━━━━━━━━━━━
+📋 *BOOKING DETAILS*
+━━━━━━━━━━━━━━━━━━━━
+📅 *Date:* ${new Date(item.startDate).toLocaleDateString("en-IN", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}
+⏰ *Time:* ${item.time || "TBC"}
+🏛️ *Hall:* ${item.hall}
+👥 *Guests:* ${item.pax || "TBC"} pax
+🍽️ *Rate Plan:* ${item.ratePlan}
+🥗 *Food Type:* ${item.foodType}
+🔄 *Status:* ${item.bookingStatus}
+
+━━━━━━━━━━━━━━━━━━━━
+💰 *PAYMENT SUMMARY*
+━━━━━━━━━━━━━━━━━━━━
+💵 *Total Amount:* ₹${item.total || "TBC"}
+✅ *Advance Paid:* ₹${item.advance}
+🔴 *Balance Due:* ₹${item.balance || "TBC"}
+
+━━━━━━━━━━━━━━━━━━━━
+🧾 *VIEW YOUR INVOICE*
+━━━━━━━━━━━━━━━━━━━━
+${invoiceLink}
+
+📍 *Buddha Avenue Banquet*
+Medical Road, Gorakhpur
+
+Thank you for choosing us! 🙏`;
+    window.open(`https://wa.me/${phone}?text=${encodeURIComponent(msg)}`, "_blank");
   };
 
   const maxPage = Math.ceil(totalPages / 10);

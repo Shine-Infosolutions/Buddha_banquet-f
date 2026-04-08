@@ -6,6 +6,9 @@ import { motion } from "framer-motion";
 import Logo from "../../assets/buddha avenue.png";
 import WaterMark from "../../assets/buddha avenue.png";
 import TermsAndConditions from "../../components/TermsAndConditions";
+import html2pdf from "html2pdf.js";
+import html2canvas from "html2canvas";
+import jsPDF from "jspdf";
 
 const Invoice = () => {
   const { id } = useParams();
@@ -14,6 +17,8 @@ const Invoice = () => {
   const [error, setError] = useState(null);
   const [menuData, setMenuData] = useState(null);
   const printRef = useRef();
+  const invoiceRef = useRef();
+  const termsRef = useRef();
   const navigate = useNavigate();
 
   const handlePrint = useReactToPrint({
@@ -37,6 +42,73 @@ const Invoice = () => {
     const message = `Hi ${booking.name}, here is your booking invoice from Buddha Avenue. Please use Ctrl+P (or Cmd+P on Mac) to print/save as PDF, then share the PDF file.`;
     window.open(`https://wa.me/${booking.whatsapp || booking.number}?text=${encodeURIComponent(message)}`, '_blank');
     setTimeout(() => window.print(), 500);
+  };
+
+  const handleSharePDF = async () => {
+    if (!invoiceRef.current || !termsRef.current) return;
+    const raw = String(booking.whatsapp || booking.number || "").replace(/\D/g, "").replace(/^0+/, "");
+    const phone = raw.length === 10 ? `91${raw}` : raw.length === 12 && raw.startsWith("91") ? raw : null;
+    if (!phone) { alert("Invalid phone number."); return; }
+
+    const patchAndCapture = async (element) => {
+      const clone = element.cloneNode(true);
+      clone.style.cssText = "position:fixed;top:0;left:0;width:794px;background:#fff;z-index:-9999;";
+
+      // Fix watermark background-image to use absolute URL
+      clone.querySelectorAll("*").forEach(el => {
+        const bg = el.style.backgroundImage || window.getComputedStyle(el).backgroundImage;
+        if (bg && bg.includes("url")) {
+          const match = bg.match(/url\(["']?(.*?)["']?\)/);
+          if (match && match[1] && !match[1].startsWith("data:") && !match[1].startsWith("http")) {
+            el.style.backgroundImage = `url(${window.location.origin}${match[1].startsWith("/") ? "" : "/"}${match[1]})`;
+          }
+        }
+      });
+
+      document.body.appendChild(clone);
+
+      clone.querySelectorAll("*").forEach(el => {
+        const computed = window.getComputedStyle(el);
+        const bg = computed.getPropertyValue("background-color");
+        const color = computed.getPropertyValue("color");
+        const border = computed.getPropertyValue("border-color");
+        if (bg && (bg.includes("oklab") || bg.includes("oklch"))) el.style.setProperty("background-color", "transparent", "important");
+        if (color && (color.includes("oklab") || color.includes("oklch"))) el.style.setProperty("color", "#1a1a1a", "important");
+        if (border && (border.includes("oklab") || border.includes("oklch"))) el.style.setProperty("border-color", "#e5e7eb", "important");
+      });
+
+      const canvas = await html2canvas(clone, {
+        scale: 2, useCORS: true, allowTaint: true, backgroundColor: "#ffffff", width: 794, windowWidth: 794,
+      });
+      document.body.removeChild(clone);
+      return canvas;
+    };
+
+    const pdf = new jsPDF({ unit: "mm", format: "a4", orientation: "portrait" });
+    const pageWidth = pdf.internal.pageSize.getWidth();
+    const pageHeight = pdf.internal.pageSize.getHeight();
+
+    const addCanvasToPDF = (canvas, isFirst) => {
+      const imgData = canvas.toDataURL("image/jpeg", 0.98);
+      const imgHeight = (canvas.height * pageWidth) / canvas.width;
+      let y = 0;
+      while (y < imgHeight) {
+        if (!isFirst || y > 0) pdf.addPage();
+        pdf.addImage(imgData, "JPEG", 0, -y, pageWidth, imgHeight);
+        y += pageHeight;
+      }
+    };
+
+    const canvas1 = await patchAndCapture(invoiceRef.current);
+    addCanvasToPDF(canvas1, true);
+
+    const canvas2 = await patchAndCapture(termsRef.current);
+    addCanvasToPDF(canvas2, false);
+
+    pdf.save(`Invoice_${booking.name}_${new Date(booking.startDate).toLocaleDateString("en-GB").replace(/\//g, "-")}.pdf`);
+
+    const msg = `Hi *${booking.name}*, please find your booking invoice attached above.\n\n📅 *Date:* ${new Date(booking.startDate).toLocaleDateString("en-IN", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}\n🏛️ *Hall:* ${booking.hall}\n👥 *Guests:* ${booking.pax} pax\n💰 *Total:* ₹${booking.total || grandTotal.toFixed(2)}\n🔴 *Balance Due:* ₹${booking.balance || 0}\n\n_Buddha Avenue Banquet, Medical Road, Gorakhpur_ 🙏`;
+    setTimeout(() => window.open(`https://wa.me/${phone}?text=${encodeURIComponent(msg)}`, "_blank"), 1000);
   };
 
   useEffect(() => {
@@ -117,6 +189,9 @@ const Invoice = () => {
           <button onClick={handleShare} className="inline-flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg font-semibold hover:bg-green-700">
             📱 WhatsApp
           </button>
+          <button onClick={handleSharePDF} className="inline-flex items-center gap-2 px-4 py-2 bg-green-700 text-white rounded-lg font-semibold hover:bg-green-800">
+            📄 Share PDF
+          </button>
           <button onClick={handlePrint} className="inline-flex items-center gap-2 px-4 py-2 bg-[#c3ad6b] text-white rounded-lg font-semibold hover:bg-[#b39b5a]">
             🖨️ Print
           </button>
@@ -127,9 +202,8 @@ const Invoice = () => {
       <div ref={printRef} className="max-w-3xl mx-auto">
 
         {/* PAGE 1 */}
-        <div className="bg-white shadow-lg relative overflow-hidden mb-0"
-          style={{ backgroundImage: `url(${WaterMark})`, backgroundSize: '30%', backgroundPosition: 'center', backgroundRepeat: 'no-repeat' }}>
-          <div className="absolute inset-0 bg-white/50 pointer-events-none"></div>
+        <div ref={invoiceRef} className="bg-white shadow-lg relative overflow-hidden mb-0">
+          <img src={WaterMark} alt="" className="absolute pointer-events-none" style={{ opacity: 0.12, width: '30%', top: '50%', left: '50%', transform: 'translate(-50%, -50%)' }} />
           <div className="relative z-10">
 
             {/* Header */}
@@ -252,7 +326,9 @@ const Invoice = () => {
         </div>
 
         {/* PAGE 2 - Terms & Conditions */}
-        <TermsAndConditions />
+        <div ref={termsRef}>
+          <TermsAndConditions />
+        </div>
       </div>
     </motion.div>
   );

@@ -33,11 +33,8 @@ const TERMS = [
 
 const TermsAndConditions = () => {
   return (
-    <div
-      className="print:break-before-page relative overflow-hidden"
-      style={{ backgroundImage: `url(${WaterMark})`, backgroundSize: '30%', backgroundPosition: 'center', backgroundRepeat: 'no-repeat' }}
-    >
-      <div className="absolute inset-0 bg-white/60 pointer-events-none"></div>
+    <div className="print:break-before-page relative overflow-hidden">
+      <img src={WaterMark} alt="" className="absolute pointer-events-none" style={{ opacity: 0.12, width: '30%', top: '50%', left: '50%', transform: 'translate(-50%, -50%)' }} />
       <div className="relative z-10">
       {/* Header */}
       <div className="bg-[#f7f5ef] px-8 py-4 print:bg-white print:px-2 print:py-2 print:border-b print:border-gray-300">
